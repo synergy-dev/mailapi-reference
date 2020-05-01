@@ -1,0 +1,1593 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title>Synergy! メールAPIマニュアル</title>
+<link href="css/main.css" rel="stylesheet" type="text/css">
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-50591-23"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-50591-23');
+</script>
+</head>
+
+<body id="basic">
+<a name="top" id="top"></a>
+
+<!-- title -->
+<h1>「クラウド型コミュニケーション・プラットフォーム Synergy!」 Synergy! メールAPI<div class="right">Version 1.0</div></h1>
+
+<!-- menu -->
+
+<!-- main -->
+
+<!-- 本文1 -->
+<a name="trial" id="trial"></a>
+
+<h2>無料トライアル申し込み</h2>
+<p>
+無料トライアルのお申し込みはこちらから。<br/>
+<a href="https://form.synergy-marketing.co.jp/webapp/form/17424_euz_33/index.do">申込フォームのURL</a><br/>
+実際に配信ができるクライアント認証キー、クライアントシークレットを発行いたします。
+</p>
+
+<!-- 本文1 -->
+<a name="first" id="first"></a>
+
+<h2>はじめにお読みください</h2>
+<p>
+Synergy! メールAPIは、外部サービスからHTTPS通信を使用して、配信先、配信内容を指定し、メールを配信する事ができるAPIです。<br/>
+RESTを適用しており、必要なパラメータを指定してURLにアクセスしますと、その結果を取得することができます。
+</p>
+
+<h4>リクエストURL</h4>
+<p>
+<table><tr>
+<td rowspan="4">配信</td>
+<td rowspan="4">配信設定</td>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries</td>
+<td>POST</td>
+<td>配信内容（差出人・本文・宛先リスト等）を設定し、配信を開始します</td>
+</tr>
+<tr>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</td>
+<td>GET</td>
+<td>配信状態を取得します</td>
+</tr>
+<tr>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/new</td>
+<td>POST</td>
+<td>配信内容（差出人・本文・宛先リスト等）を設定し、配信IDを発行します</td>
+</tr>
+<tr>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/send</td>
+<td>POST</td>
+<td>指定の配信IDの配信内容で配信を開始します</td>
+</tr>
+<tr>
+<td rowspan="4">配信結果</td>
+<td>開封確認結果取得</td>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/opens</td>
+<td>GET</td>
+<td>メールが開封された宛先を取得します</td>
+</tr>
+<tr>
+<td>クリックフィードバック結果取得</td>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/clicks</td>
+<td>GET</td>
+<td>メール内のURLがクリックされた宛先を取得します</td>
+</tr>
+<tr>
+<td>配信エラー結果取得</td>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/errors</td>
+<td>GET</td>
+<td>配信が失敗した宛先を取得します</td>
+</tr>
+<tr>
+<td>配信結果取得</td>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/results</td>
+<td>GET</td>
+<td>配信結果を取得します</td>
+</tr>
+</table>
+</p>
+
+<h4>補足事項</h4>
+<p>
+SSL通信(TLS1.2)が必要となります。<br/>
+各APIに応じて適切なメソッド(GET,POST)でリクエストする必要があります。<br/>
+APIの通信時の文字コードはUTF-8、エンコーディング形式はBase64エンコード+パーセントエンコーディング（URLエンコード）です。<br/>
+ユーザ名はご契約時にお知らせする3～4文字のアルファベット文字列です。<br/>
+Synergy!認証APIへのリクエストに必要なクライアントシークレットの再発行が必要な場合は、弊社Synergy!カスタマーサポートまでご相談ください。<br/>
+</p>
+
+<br/>
+
+<!-- 本文2 -->
+<a name="certificate" id="certificate"></a>
+
+<h2>認証</h2>
+
+<h4>認証方法</h4>
+<p>
+  Synergy! メールAPIにアクセスするためには、リクエストヘッダにアクセストークンを付与する必要があります。<br/>
+  アクセストークンは事前にSynergy!認可サーバから OAuth 2.0 のクライアント・クレデンシャルズフローにより取得します。<br/>
+</p>
+
+<h4>シーケンス図</h4>
+<p>
+  クライアント・クレデンシャルズフローは<a href="https://tools.ietf.org/html/rfc6749#section-4.4" target="_blank">RFC 6749, 4.4. Client Credentials Grant</a> で定義されているフローです。<br/>
+  Synergy!認可サーバにトークン取得のリクエストを送り、レスポンスとしてアクセストークンを受け取るフローです。<br/>
+  以下、Synergy! メールAPIにアクセスする際の流れを表した図です。
+</p>
+<img src="image/access_flow.png" alt="メールAPIアクセスの流れ" />
+
+<h3>アクセストークン取得</h3>
+
+<p>
+Synergy! メールAPIにアクセスするためのアクセストークンを取得します。
+</p>
+
+<h4>リクエストURL</h4>
+<p>
+<table><tr>
+<td style="background-color:#e2eeec"><b>URL</b></td>
+<td>https://auth.paas.crmstyle.com/oauth2/token</td>
+</tr>
+<tr>
+<td style="background-color:#e2eeec"><b>メソッド</b></td>
+<td>POST</td>
+</tr>
+</table>
+</p>
+
+<h4>リクエストヘッダ</h4>
+<p>
+<table>
+<th>フィールド名</th>
+<th>内容</th>
+<tr>
+<td>Authorization</td>
+<td>Basic {クライアントクレデンシャルズ}<br/>
+<b>※クライアントクレデンシャルズは、事前に発行したクライアント認証キー, クライアントシークレットを:(コロン)で繋いで、base64でエンコードした文字列を指定します。</b></td>
+</tr>
+<tr>
+<td>Content-Type</td>
+<td>application/x-www-form-urlencoded</td>
+</tr>
+</table>
+</p>
+
+<h4>リクエストパラメータ</h4>
+<p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>grant_type</td>
+<td>String</td>
+<td>OAuth 2.0の処理フローを表します。<br/>
+  "client_credentials" を指定してください。</td>
+</tr>
+<tr>
+<td>audience</td>
+<td>String</td>
+<td>アクセスするAPIのドメインを表します。<br/>
+  "https://mail.paas.crmstyle.com" を指定してください。
+</td>
+</tr>
+<tr>
+<td>scope</td>
+<td>String</td>
+<td>アクセスするAPIの種別を表します。<br/>
+指定できるscopeは<a href="#certificate_scopes">こちら</a>を参照してください。<br/>
+複数指定する場合は半角スペースをscopeの間に含めて指定してください。
+</td>
+</tr>
+</table>
+</p>
+
+<h4 id="certificate_scopes">scope一覧</h4>
+<p>
+<table>
+<tr>
+<th class="w150">scope名</th>
+<th class="w500">アクセスできるAPI</th>
+</tr>
+<tr>
+<td>mail:send</td>
+<td>
+<ul>
+<li><a href="#mail:send:post">メール配信実施</a></li>
+<li><a href="#mail:send:get">配信状態取得</a></li>
+</ul>
+</td>
+</tr>
+<tr>
+<td>mail:result</td>
+<td>
+<ul>
+<li><a href="#mail:result:open">開封確認結果取得</a></li>
+<li><a href="#mail:result:click">クリックフィードバック結果取得</a></li>
+<li><a href="#mail:result:error">配信エラー結果取得</a></li>
+</ul>
+</td>
+</tr>
+</table>
+</p>
+
+<h4>リクエストサンプル</h4>
+<table>
+<tr>
+<td>
+<pre>
+CLIENT_ID={your client id}
+CLIENT_SECRET={your client secret}
+AUTH_HEADER=`echo -n ${CLIENT_ID}:${CLIENT_SECRET} | base64`
+curl -i -X POST \
+     -H "Authorization: Basic ${AUTH_HEADER}" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     https://auth.paas.crmstyle.com/oauth2/token \
+     -d "grant_type=client_credentials&scope=mail:send mail:result&audience=https://mail.paas.crmstyle.com"
+</pre>
+</td>
+</tr>
+</table>
+
+<h4>レスポンス</h4>
+<p>レスポンスはJSON形式で返します。</p>
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "access_token": "{Access Token}",
+  "expires_in": 3599,
+  "scope": "mail:send mail:result",
+  "token_type": "bearer"
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>レスポンスJSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>access_token</td>
+<td>String</td>
+<td>Synergy! メールAPI にアクセスするためのアクセストークンです。</td>
+</tr>
+<tr>
+<td>expires_in</td>
+<td>Integer</td>
+<td>アクセストークンの有効期限が切れるまでの秒数を表します。</td>
+</tr>
+<tr>
+<td>scope</td>
+<td>String</td>
+<td>アクセストークンに含まれるscopeの一覧を表します。</td>
+</tr>
+<tr>
+<td>token_type</td>
+<td>String</td>
+<td>トークンの種別を表します。<br/>bearer固定です。</td>
+</tr>
+</table>
+
+<h3>Synergy! メールAPIリクエスト</h3>
+
+<p>
+メールAPIリクエストの際、Authorization ヘッダにアクセストークンを指定してください。<br/>
+</p>
+
+<h4>リクエスト例(開封確認結果取得)</h4>
+<table>
+<tr>
+<td>
+<pre>
+ACCESS_TOKEN={your acccess token}
+curl -i \
+     -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+     https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/opens
+</pre>
+</td>
+</tr>
+</table>
+
+<h4>補足事項</h4>
+<p>
+アクセストークンには1時間の有効期限があります。<br/>
+有効期限切れのアクセストークンを指定されてメールAPIをリクエストされた場合、401 Unauthorized エラーを返します。<br/>
+有効期限切れとなった場合は、再度アクセストークンを取得してください。
+</p>
+
+<br/>
+
+<!-- 本文2 -->
+<a name="request" id="request"></a>
+
+<h2>API仕様</h2>
+
+<h3>配信</h3>
+<h4 id="mail:send:post">メール配信実施<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries</h4>
+<p>
+メールコンテンツ、配信先リストを指定して配信を開始します。
+</p>
+
+<p>リクエストサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "requestId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "test": false,
+  "encode": "UTF-8",
+  "fromAddress": "support@example.com",
+  "fromName": "カスタマーサポート",
+  "replyAddress": "reply@example.com",
+  "subject": "こんにちは($db.Customer.name$)さん",
+  "bodyText": "お問い合わせは次のＵＲＬから <sym-tr symccid=\"0\" symcc=\"true\">http://example.com/</sym-tr>",
+  "bodyHtml": "&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;
+お問い合わせは次のＵＲＬから&lt;a href=\"http://example.com/\" symccid=\"0\" symcc=\"true\"&gt;フォーム&lt;/a&gt;
+&lt;/body&gt;&lt;/html&gt;",
+  "deliveryMailAddressPropertyName": "Customer.mailaddress",
+  "count": 2,
+  "deliveryData": [
+    {
+      "Customer.synergyid":         1,
+      "Customer.mailaddress":      "foo@example.com",
+      "Customer.name":                "山田"
+    },
+    {
+      "Customer.synergyid":         2,
+      "Customer.mailaddress":      "bar@example.com",
+      "Customer.name":                "佐藤"
+    }
+  ]
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w50">必須</th>
+<th class="w100">デフォルト値</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>requestId</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>API多重リクエストによる重複配信防止用のIDです。<br/>
+指定のIDで既に配信が設定されている場合、リクエストエラーとなり配信されません。その際、レスポンスは以前の配信設定と同一となります。<br/>
+requestIdには有効期間があり、1ヵ月です。期間を過ぎて以前のrequestIdを指定した場合は配信が実施されます。<br/>
+指定されない場合は常に配信が実施されます。<br/>
+IDはUUIDを推奨します。</td>
+</tr>
+<tr>
+<td>test</td>
+<td>Boolean</td>
+<td></td>
+<td>false</td>
+<td>テスト配信指定フラグです。trueの場合はテスト配信となり、各種レポートが記録されません。<br/>
+テスト配信では配信IDが発行されないため、レスポンスは空値となります。<br/>
+テスト配信では配信通数は20通までとなります。</td>
+</tr>
+<tr>
+<td>encode</td>
+<td>String</td>
+<td></td>
+<td>UTF-8</td>
+<td>メールのエンコーディングをUTF-8、ISO-2022-JPのどちらか指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>envelopeFrom</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>独自エンベロープFROMを使用する場合にエンベロープFROMメールアドレスを指定します。<br/>
+※独自エンベロープFROMのご利用は別途お申し込みが必要です。
+</td>
+</tr>
+<tr>
+<td>fromAddress</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メール差出人アドレスを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>fromName</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>メール差出人名を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>replyAddress</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>メール返信先アドレスを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>preheader</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>プレヘッダ―を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>subject</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メール件名を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>bodyText</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メールテキスト本文を指定します。<br/>
+bodyText、bodyHtmlどちらかは必須です。<br/>
+</td>
+</tr>
+<tr>
+<td>bodyHtml</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メールHTML本文を指定します。<br/>
+bodyText、bodyHtmlどちらかは必須です。<br/>
+</td>
+</tr>
+<tr>
+<td>deliveryMailAddressPropertyName</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>配信先リスト(deliveryData[])中の宛先メールアドレスのプロパティ名を指定します。
+</td>
+</tr>
+<tr>
+<td>trackingDomain</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>クリックフィードバックURLに独自ドメインを使用する場合にドメインを指定します。<br/>
+※独自ドメインのご利用は別途お申し込みが必要です。
+</td>
+</tr>
+<tr>
+<td>trackingDomainSslReady</td>
+<td>Boolean</td>
+<td></td>
+<td>false</td>
+<td>クリックフィードバックURLに使用する独自ドメインがSSL通信可能かどうかを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>count</td>
+<td>Integer</td>
+<td>○</td>
+<td></td>
+<td>配信先リスト(deliveryData[])の長さを指定します。<br/>
+配信先リスト長がcountと一致しない場合、リクエストエラーとなり配信されません。<br/>
+</td>
+</tr>
+<tr>
+<td>deliveryData[]</td>
+<td>Array</td>
+<td>○</td>
+<td></td>
+<td>配信先リストです。宛先データをハッシュ配列で指定します。<br/>
+プロパティCustomer.synergyidはレポートデータ紐づけのIDとなり、必須です。型はIntegerです。1以上2^64-1(18,446,744,073,709,551,615)以下の範囲で指定します。<br/>
+宛先メールアドレスとなる文字列プロパティが必須です。プロパティ名は任意で、deliveryMailAddressPropertyNameで指定します。<br/>
+埋め込みコマンドとして、プロパティ名Customer.で始まる任意の文字列データを指定可能です。<br/>
+配列長はcountプロパティと一致しなければなりません。
+</td>
+</tr>
+</table>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "deliveryTaskId":9999,
+  "textClickFeedbacks":[{"id": 14,"url": "http://example.com/"}],
+  "htmlClickFeedbacks":[{"id": 15,"url": "http://example.com/"}]
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>deliveryTaskId</td>
+<td>Integer</td>
+<td>メール配信IDです。配信状況、各種レポート取得時に必要となります。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks</td>
+<td>Array</td>
+<td>bodyText中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks</td>
+<td>Array</td>
+<td>bodyHtml中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+</table>
+
+<h4 id="mail:send:get">配信状態取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</h4>
+<p>
+指定の配信IDの配信状態を取得します。
+</p>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "deliveryTaskId": 9999,
+  "status": "SENDING",
+  "total": 58933,
+  "sent": 45000
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>deliveryTaskId</td>
+<td>Integer</td>
+<td>メール配信IDです。
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>配信の状態をSENDINGまたはCOMPLETEDまたはERRORで表します。<br/>
+SENDING: 配信処理中です。 {sent} 通まで配信処理が完了しています。<br/>
+COMPLETED: 配信を完了しています。{sent} {total} が一致します。<br/>
+ERROR: エンジニア対応により強制終了された状態です。※通常発生しません。
+</td>
+</tr>
+<tr>
+<td>total</td>
+<td>Integer</td>
+<td>配信総数です。</td>
+</tr>
+<tr>
+<td>sent</td>
+<td>Integer</td>
+<td>配信完了数です。</td>
+</tr>
+</table>
+
+<h4 id="mail:send:post">メール配信設定作成<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/new</h4>
+<p>
+メールコンテンツを指定して配信設定を作成します。
+</p>
+
+<p>リクエストサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "encode": "UTF-8",
+  "fromAddress": "support@example.com",
+  "fromName": "カスタマーサポート",
+  "replyAddress": "reply@example.com",
+  "subject": "こんにちは($db.Customer.name$)さん",
+  "bodyText": "お問い合わせは次のＵＲＬから <sym-tr symccid=\"0\" symcc=\"true\">http://example.com/</sym-tr>",
+  "bodyHtml": "&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;
+お問い合わせは次のＵＲＬから&lt;a href=\"http://example.com/\" symccid=\"0\" symcc=\"true\"&gt;フォーム&lt;/a&gt;
+&lt;/body&gt;&lt;/html&gt;",
+  "deliveryMailAddressPropertyName": "Customer.mailaddress"
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w50">必須</th>
+<th class="w100">デフォルト値</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>encode</td>
+<td>String</td>
+<td></td>
+<td>UTF-8</td>
+<td>メールのエンコーディングをUTF-8、ISO-2022-JPのどちらか指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>fromAddress</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メール差出人アドレスを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>fromName</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>メール差出人名を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>replyAddress</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>メール返信先アドレスを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>preheader</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>プレヘッダ―を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>subject</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メール件名を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>bodyText</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メールテキスト本文を指定します。<br/>
+bodyText、bodyHtmlどちらかは必須です。<br/>
+</td>
+</tr>
+<tr>
+<td>bodyHtml</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メールHTML本文を指定します。<br/>
+bodyText、bodyHtmlどちらかは必須です。<br/>
+</td>
+</tr>
+<tr>
+<td>deliveryMailAddressPropertyName</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>配信実施時の配信先リスト(deliveryData[])中の宛先メールアドレスのプロパティ名を指定します。
+</td>
+</tr>
+</table>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "deliveryTaskId":9999,
+  "textClickFeedbacks":[{"id": 14,"url": "http://example.com/"}],
+  "htmlClickFeedbacks":[{"id": 15,"url": "http://example.com/"}]
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>deliveryTaskId</td>
+<td>Integer</td>
+<td>メール配信IDです。配信状況、各種レポート取得時に必要となります。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks</td>
+<td>Array</td>
+<td>bodyText中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks</td>
+<td>Array</td>
+<td>bodyHtml中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+</table>
+
+<h4 id="mail:send:post">指定の配信IDのメール配信実施<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/send</h4>
+<p>
+指定の配信IDのメールコンテンツを利用し、配信先リストを指定して配信を開始します。
+</p>
+
+<p>リクエストサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "requestId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "test": false,
+  "count": 2,
+  "deliveryData": [
+    {
+      "Customer.synergyid":         1,
+      "Customer.mailaddress":      "foo@example.com",
+      "Customer.name":                "山田"
+    },
+    {
+      "Customer.synergyid":         2,
+      "Customer.mailaddress":      "bar@example.com",
+      "Customer.name":                "佐藤"
+    }
+  ]
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w50">必須</th>
+<th class="w100">デフォルト値</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>requestId</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>API多重リクエストによる重複配信防止用のIDです。<br/>
+指定のIDで既に配信が設定されている場合、リクエストエラーとなり配信されません。<br/>
+requestIdには有効期間があり、1ヵ月です。期間を過ぎて以前のrequestIdを指定した場合は配信が実施されます。<br/>
+指定されない場合は常に配信が実施されます。<br/>
+IDはUUIDを推奨します。</td>
+</tr>
+<tr>
+<td>test</td>
+<td>Boolean</td>
+<td></td>
+<td>false</td>
+<td>テスト配信指定フラグです。trueの場合はテスト配信となり、各種レポートが記録されません。<br/>
+テスト配信では配信IDが発行されないため、レスポンスは空値となります。<br/>
+テスト配信では配信通数は20通までとなります。</td>
+</tr>
+<tr>
+<td>trackingDomain</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>クリックフィードバックURLに独自ドメインを使用する場合にドメインを指定します。<br/>
+※独自ドメインのご利用は別途お申し込みが必要です。
+</td>
+</tr>
+<tr>
+<td>trackingDomainSslReady</td>
+<td>Boolean</td>
+<td></td>
+<td>false</td>
+<td>クリックフィードバックURLに使用する独自ドメインがSSL通信可能かどうかを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>count</td>
+<td>Integer</td>
+<td>○</td>
+<td></td>
+<td>配信先リスト(deliveryData[])の長さを指定します。<br/>
+配信先リスト長がcountと一致しない場合、リクエストエラーとなり配信されません。<br/>
+</td>
+</tr>
+<tr>
+<td>deliveryData[]</td>
+<td>Array</td>
+<td>○</td>
+<td></td>
+<td>配信先リストです。宛先データをハッシュ配列で指定します。<br/>
+プロパティCustomer.synergyidはレポートデータ紐づけのIDとなり、必須です。型はIntegerです。1以上2^64-1(18,446,744,073,709,551,615)以下の範囲で指定します。<br/>
+宛先メールアドレスとなる文字列プロパティが必須です。プロパティ名はメール配信設定作成APIで指定したプロパティ名でなければなりません。<br/>
+埋め込みコマンドとして、プロパティ名Customer.で始まる任意の文字列データを指定可能です。<br/>
+配列長はcountプロパティと一致しなければなりません。
+</td>
+</tr>
+</table>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "deliveryTaskId":9999,
+  "textClickFeedbacks":[{"id": 14,"url": "http://example.com/"}],
+  "htmlClickFeedbacks":[{"id": 15,"url": "http://example.com/"}]
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>deliveryTaskId</td>
+<td>Integer</td>
+<td>メール配信IDです。配信状況、各種レポート取得時に必要となります。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks</td>
+<td>Array</td>
+<td>bodyText中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks</td>
+<td>Array</td>
+<td>bodyHtml中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+</table>
+
+<br/>
+<h3>配信結果</h3>
+<p>
+各配信結果APIのレスポンスでは、レスポンスCSVデータのMD5チェックサム値がレスポンスヘッダContent-MD5に設定されます。<br/>
+一時的なネットワーク接続性の問題が発生した場合、正常にCSVデータを受信できない可能性がありますので、<br/>
+MD5チェックサムによるCSVデータの整合性確認を必ず行ってください。<br/>
+正常なCSVデータのMD5チェックサム値は、レスポンスヘッダContent-MD5に、チェックサム値をBase64エンコーディングしたものが設定されます。
+<br/>
+<br/>
+Content-Typeヘッダは application/octet-stream;charset=UTF-8 となります。
+<br/>
+<br/>
+各配信結果APIでは、クエリパラメータ start/end で取得期間の指定が可能です。<br/>
+取得期間の指定は、開始終了・開始のみ・終了のみの指定が可能です。<br/>
+両方ともに指定しない場合、全期間が対象となります。日時指定フォーマットはISO 8601です。
+
+<p>クエリパラメータ</p>
+<table>
+<tr>
+<th class="w150">パラメータ名</th>
+<th class="w50">型</th>
+<th class="w50">必須</th>
+<th class="w100">デフォルト値</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>start</td>
+<td>DateTime</td>
+<td></td>
+<td></td>
+<td>取得期間（開始）をISO 8601フォーマットで指定します。</td>
+</tr>
+<tr>
+<td>end</td>
+<td>DateTime</td>
+<td></td>
+<td></td>
+<td>取得期間（終了）をISO 8601フォーマットで指定します。</td>
+</tr>
+</table>
+
+<p>期間指定例</p>
+<table>
+<tr>
+<th>2019年4月1日のデータを取得</th>
+<td>start=2019-04-01T00:00:00+09:00&end=2019-04-02T00:00:00+09:00</td>
+</tr>
+<tr>
+<th>2019年4月1日以降のデータを取得</th>
+<td>start=2019-04-01T00:00:00+09:00</td>
+</tr>
+<tr>
+<th>2019年3月31日までのデータを取得</th>
+<td>end=2019-04-01T00:00:00+09:00</td>
+</tr>
+<tr>
+<th>2019年4月1日15時台のデータを取得</th>
+<td>start=2019-04-01T15:00:00+09:00&end=2019-04-01T16:00:00+09:00</td>
+</tr>
+</table>
+
+<h4 id="mail:result:open">開封確認結果取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/opens</h4>
+<p>
+指定のメール配信の開封確認結果(CSV)を取得します。<br/>
+</p>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+"Synergy!ID","開封日時"
+"493","2016-09-12 08:21:38"
+</pre>
+</td>
+</tr>
+</table>
+
+<h4 id="mail:result:click">クリックフィードバック結果取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/clicks</h4>
+<p>
+指定のメール配信のクリックフィードバック結果(CSV)を取得します。
+</p>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+"Synergy!ID","クリック日時","クリックID","クリックURL"
+"493","2016-09-12 08:21:38","123","http//example.com/"
+</pre>
+</td>
+</tr>
+</table>
+
+<h4 id="mail:result:error">配信エラー結果取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/errors</h4>
+<p>
+指定のメール配信の配信エラー結果(CSV)を取得します。
+</p>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+"Synergy!ID","配信エラー日時","配信エラー理由"
+"493","2016-09-12 08:21:38","UNKNOWN_USER"
+</pre>
+</td>
+</tr>
+</table>
+
+<p>配信エラー理由一覧</p>
+<table>
+<tr>
+<th class="w150">エラーコード</th>
+<th class="w200">説明</th>
+</tr>
+<tr>
+<td>UNKNOWN_USER</td>
+<td>宛先不明</td>
+</tr>
+<tr>
+<td>UNKNOWN_HOST</td>
+<td>ドメインが見つからない</td>
+</tr>
+<tr>
+<td>MAILBOX_FULL</td>
+<td>メールボックスが一杯</td>
+</tr>
+<tr>
+<td>REJECTED</td>
+<td>受信拒否</td>
+</tr>
+<tr>
+<td>SPAM</td>
+<td>SPAMと見なされた</td>
+</tr>
+<tr>
+<td>INVALID_ADDRESS</td>
+<td>メールアドレス書式エラー</td>
+</tr>
+<tr>
+<td>SYSTEM</td>
+<td>配信リストクリーニング機能による除外</td>
+</tr>
+<tr>
+<td>OTHER</td>
+<td>その他エラー</td>
+</tr>
+</table>
+
+<h4 id="mail:result:results">配信結果取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/results</h4>
+<p>
+指定のメール配信の結果(CSV)を取得します。
+</p>
+<p>
+※反映されるには配信から通常、1分ほどかかります。
+</p>
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+"Synergy!ID","配信日時"
+"10038","2020-04-28 16:20:09"
+</pre>
+</td>
+</tr>
+</table>
+
+<!-- 本文3 -->
+<a name="error" id="error"></a>
+
+<h2>エラーコード</h2>
+
+<h4>Synergy! メールAPIから返されるエラー定義</h4>
+<p>
+HTTPステータスコードを使います。<br/>
+<table>
+<tr>
+<th class="w100">ステータス<br/>コード</th>
+<th class="w200">説明</th>
+<th class="w400">備考</th>
+</tr>
+<tr>
+<td>200</td>
+<td>OK</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad Request</td>
+<td>
+要求されたリクエストパラメータの形式が正しくない<br/>
+※レスポンスボディにエラー情報を返します<br/>
+</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+<td>認証が正しくない、または認証データが見つからない</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+<td>リソースにアクセスする権限が不足している</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found</td>
+<td>不正なURLリクエストが送信された、またはリソースが見つからない（ユーザが見つからないなど）</td>
+</tr>
+<tr>
+<td>405</td>
+<td>Method Not Allowed</td>
+<td>リクエストで指定されたメソッドが見つからない</td>
+</tr>
+<tr>
+<td>409</td>
+<td>Conflict</td>
+<td>指定されたrequestIdのリクエストが以前のリクエストと重複</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Internal Server Error</td>
+<td>サーバ内部でエラーが発生</td>
+</tr>
+<tr>
+<td>503</td>
+<td>Service Unavailable</td>
+<td>サーバメンテナンス中もしくはなんらかの障害が発生</td>
+</tr>
+</table>
+</p>
+
+<p>ステータスコード400のエラーについては、エラーメッセージも返します。</p>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "errors":[
+    {
+      "code": 10000,
+      "property": "fromAddress",
+      "message": "required"
+    },
+    {
+      "code": 10001,
+      "property": "subject",
+      "message": "required"
+    },
+    {
+      "code": 10002,
+      "property": null,
+      "message": "bodyText or bodyHtml is required"
+    }
+  ]
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>errors[]</td>
+<td>Array</td>
+<td>発生したエラー内容のハッシュ配列です</td>
+</tr>
+<tr>
+<td>errors[].code</td>
+<td>Integer</td>
+<td>発生したエラーのエラーコードです。</td>
+</tr>
+<tr>
+<td>errors[].property</td>
+<td>String</td>
+<td>発生したエラーの原因となったリクエストデータのプロパティ名です。<br/>
+特定のプロパティが原因でない場合、nullです。</td>
+</tr>
+<tr>
+<td>errors[].message</td>
+<td>String</td>
+<td>発生したエラーの説明です。</td>
+</tr>
+</table>
+
+<p>エラーコード一覧</p>
+<table>
+<tr>
+<th class="w100">エラーコード</th>
+<th>プロパティ</th>
+<th>エラー原因</th>
+<th>関連API</th>
+</tr>
+<tr>
+<td>10000</td>
+<td>encode</td>
+<td>エンコードはUTF-8もしくはISO-2022-JPである必要があります </td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10001</td>
+<td>envelopeFrom</td>
+<td>お申し込みいただいていないエンベロープFROMメールアドレスです</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10002</td>
+<td>trackingDomain</td>
+<td>お申し込みいただいていないドメインです</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10003</td>
+<td>fromAddress</td>
+<td>差出人アドレスは必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10004</td>
+<td>fromAddress</td>
+<td>メールアドレス書式が不正です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10005</td>
+<td>fromAddress</td>
+<td>メールアドレスは256文字以下である必要があります。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10006</td>
+<td>fromName</td>
+<td>差出人名は120文字以下である必要があります。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10007</td>
+<td>replyAddress</td>
+<td>メールアドレス書式が不正です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10008</td>
+<td>replyAddress</td>
+<td>メールアドレスは256文字以下である必要があります。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10009</td>
+<td>subject</td>
+<td>件名は必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10010</td>
+<td>subject</td>
+<td>件名は120文字以下である必要があります。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10011</td>
+<td>bodyTesxt/bodyHtml</td>
+<td>テキスト本文かHTML本文のどちらかは必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10012</td>
+<td>count</td>
+<td>配信リスト長は必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10013</td>
+<td>count</td>
+<td>deliveryDataのサイズが配信リスト長と一致しません。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10014</td>
+<td>count</td>
+<td>テスト配信は最大20通です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10015</td>
+<td>deliveryMailAddressPropertyName</td>
+<td>宛先メールアドレスのプロパティ名は必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10016</td>
+<td>deliveryData</td>
+<td>配信リストは必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10017</td>
+<td>deliveryData</td>
+<td>配信リスト中に Customer.synergyid は必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10018</td>
+<td>deliveryData</td>
+<td>配信リスト中の Customer.synergyid は1以上2^64-1(18,446,744,073,709,551,615)以下の範囲の数値である必要があります。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10019</td>
+<td>deliveryData</td>
+<td>配信リスト中にdeliveryMailAddressPropertyNameで指定されたメールアドレス項目が必須です。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10020</td>
+<td>start end</td>
+<td>日時指定フォーマットが不正です。ISO 8601フォーマットで指定してください。</td>
+<td>配信結果</td>
+</tr>
+</table>
+
+<br/>
+
+<!-- 本文7 -->
+<a name="other" id="other"></a>
+
+<h2>その他</h2>
+
+<h3>埋め込みコマンドを使用する</h3>
+<p>
+埋め込みコマンドは配信先リストのハッシュキーをメール本文中に"($db.Customer.name$)"のように含めることで、個々のデータをメールに記載することができます。<br/>
+埋め込みコマンドは以下の箇所で使用できます。<br/>
+　・メール差出人アドレス<br/>
+　・メール差出人名<br/>
+　・メール返信先アドレス<br/>
+　・メール件名<br/>
+　・メールテキスト本文<br/>
+　・メールHTML本文<br/>
+※メール差出人名、差出人アドレスに埋め込みコマンドを使用することで、私信風メールを送ることができます。<br/>
+</p>
+<p>
+・配信先リスト例<br/>
+<table>
+<tr>
+<td>
+<pre>
+  "deliveryData": [
+    {
+      "Customer.synergyid":        1,
+      "Customer.mailaddress":      "foo@example.com",
+      "Customer.name":             "山田",
+      "Customer.created_at":       "2019/03/01",
+      "Customer.point":            99
+    }
+  ]
+</pre>
+</td>
+</tr>
+</table>
+</p>
+<p>
+・本文テキスト設定例<br/>
+<table>
+<tr>
+<td>
+<pre>
+($db.Customer.name$)　様
+
+あなたの登録日は($db.Customer.created_at$)で、残ポイントは($db.Customer.point$)です。
+</pre>
+</td>
+</tr>
+</table>
+</p>
+<p>
+・実際に届くメール<br/>
+<table>
+<tr>
+<td>
+<pre>
+山田　様
+
+あなたの登録日は2019/03/01で、残ポイントは99です。
+</pre>
+</td>
+</tr>
+</table>
+</p>
+<p>
+・注意事項<br/>
+埋め込みコマンドとして利用するプロパティは、配信リスト(deliveryData[])の先頭のハッシュに含まれるプロパティで決定されます。<br/>
+2列目以降に先頭のハッシュに含まれないプロパティが含まれる場合、埋め込みコマンドのデータとして認識されません。
+</p>
+
+<br/>
+<h3>テキストメール、HTMLメールを送る</h3>
+<p>
+配信設定等で本文を指定する際、指定の仕方によって配信したいメール形式をわけることができます。
+</p>
+<table>
+<tr>
+<th>メール形式</th>
+<th>指定する本文</th>
+</tr>
+<tr>
+<td>テキストメール</td>
+<td>本文テキストのみ</td>
+</tr>
+<tr>
+<td>HTMLメール</td>
+<td>本文HTMLのみ</td>
+</tr>
+<tr>
+<td>マルチパートメール</td>
+<td>本文テキストと本文HTMLの両方</td>
+</tr>
+</table>
+<br/>
+
+<h3>クリックフィードバックを使用する</h3>
+<p>
+クリックフィードバックはメール本文に所定の書式でURLを含めることで、メール受信者のURLへのアクセスを記録することができます。<br/>
+テキスト本文、HTML本文で書式が異なり、それぞれ以下の通りです。
+</p>
+
+<table>
+<tr>
+<th class="w100"></th>
+<th >書式</th>
+<th >書式サンプル</th>
+<th >受信サンプル</th>
+</tr>
+<tr>
+<td>テキスト本文</td>
+<td>&lt;sym-tr symccid="0" symcc="true"&gt;{URL}&lt;/sym-tr&gt;</td>
+<td>&lt;sym-tr symccid="0" symcc="true"&gt;http://example.com/&lt;/sym-tr&gt;</td>
+<td>http://us.msgs.jp/XXXXXXXXXXXXXX</td>
+</tr>
+<tr>
+<td>HTML本文</td>
+<td>&lt;a symccid="0" symcc="true" href="{URL}"&gt;{任意の文字列}&lt;/a&gt;</td>
+<td>&lt;a symccid="0" symcc="true" href="http://example.com/"&gt;応募サイト&lt;/a&gt;</td>
+<td>&lt;a href="http://us.msgs.jp/XXXXXXXXXXXXXX"&gt;応募サイト&lt;/a&gt;</td>
+</tr>
+</table>
+<br/>
+
+<h3>APIコール数、通数制限について</h3>
+<p>
+APIコール数、1コールあたりの通数に制限はありませんが、<br/>
+最大で秒間5コール程度、1コールあたり100万通程度を推奨します。<br/>
+</p>
+<br/>
+
+<!-- 本文8 -->
+<h2>改訂履歴</h2>
+<table>
+  <tr>
+    <th class="w100">改訂日</th>
+    <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2020/04/30</td>
+    <td>配信結果取得APIを追加</td>
+  </tr>
+  <tr>
+    <td>2019/11/20</td>
+    <td>「埋め込みコマンドを使用する」に注意事項を追記</td>
+  </tr>
+  <tr>
+    <td>2019/11/12</td>
+    <td>APIを追加<br/>
+・メール配信設定作成<br/>
+・指定の配信IDのメール配信実施<br/>
+配信結果取得APIに期間指定パラメータを追加<br/>
+エラーコード追加 (10020:期間指定パラメータ不正)<br/>
+エラーコード10018に指定可能範囲を追記<br/>
+配信エラー結果取得APIのレスポンスサンプルの誤りを修正<br/>
+[正]<br/>
+"Synergy!ID","配信エラー日時","配信エラー理由"<br/>
+"493","2016-09-12 08:21:38","UNKNOWN_USER"<br/>
+[誤]<br/>
+"Synergy!ID","配信エラー日時","配信エラーID","配信エラー理由"<br/>
+"493","2016-09-12 08:21:38","123","4700","UNKNOWN_USER"<br/>
+    </td>
+  </tr>
+  <tr>
+    <td>2019/10/28</td>
+    <td>サービス名称を修正<br/>
+・正「Synergy! メールAPI」<br/>
+・誤「Synergy!メールAPI」<br/>
+メール配信実施のJSONプロパティ deliveryData[] における、Customer.synergyid の指定可能範囲を追記<br/>
+メール配信実施のレスポンスサンプルを修正<br/>
+・正  "htmlClickFeedbacks":[{"id": 15,"url": "http://example.com/"}]<br/>
+・誤  "htmlClickFeedbacks":[{"id": 15,"url": "http://example.com/"]]
+    </td>
+  </tr>
+  <tr>
+    <td>2019/10/07</td>
+    <td>推奨APIコール数を追記</td>
+  </tr>
+  <tr>
+    <td>2019/08/16</td>
+    <td>エラーコードを追記<br/>配信結果取得APIレスポンスのCSV仕様を変更<br/>文書全体の構成を変更</td>
+  </tr>
+  <tr>
+    <td>2019/07/08</td>
+    <td>認証API仕様を追記</td>
+  </tr>
+  <tr>
+    <td>2019/05/29</td>
+    <td>初版</td>
+  </tr>
+</table>
+<br/>
+</body>
+</html>

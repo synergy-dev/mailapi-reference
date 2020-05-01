@@ -1,1 +1,1 @@
-Synergy! Mail API Reference
+# Synergy! Mail API Reference
