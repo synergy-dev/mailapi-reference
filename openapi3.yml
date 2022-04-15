@@ -34,6 +34,22 @@ paths:
       security:
       - mail_oauth:
         - "mail:send"
+    delete:
+      summary: "Delete a delivery task"
+      operationId: "deleteDeliveryTask"
+      parameters:
+      - $ref: "#/components/parameters/user"
+      - $ref: "#/components/parameters/taskId"
+      responses:
+        200:
+          description: "success"
+        404:
+          description: "no delivery task found"
+        500:
+          description: "internal server error"
+      security:
+      - mail_oauth:
+        - "mail:send"
   /tymail/v1/{user}/mail/deliveries:
     post:
       summary: "start mail delivery"

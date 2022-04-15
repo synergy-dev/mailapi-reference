@@ -48,8 +48,8 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 <h4>リクエストURL</h4>
 <p>
 <table><tr>
-<td rowspan="4">配信</td>
-<td rowspan="4">配信設定</td>
+<td rowspan="5">配信</td>
+<td rowspan="5">配信設定</td>
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries</td>
 <td>POST</td>
 <td>配信内容（差出人・本文・宛先リスト等）を設定し、配信を開始します</td>
@@ -58,6 +58,11 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</td>
 <td>GET</td>
 <td>配信状態を取得します</td>
+</tr>
+<tr>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</td>
+<td>DELETE</td>
+<td>配信データを削除します</td>
 </tr>
 <tr>
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/new</td>
@@ -630,6 +635,11 @@ ERROR: エンジニア対応により強制終了された状態です。※通�
 <td>配信完了数です。</td>
 </tr>
 </table>
+
+<h4 id="mail:send:delete">配信データ削除<br/>DELETE /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</h4>
+<p>
+指定の配信IDの配信データを削除します。削除すると各種配信結果は取得できません。
+</p>
 
 <h4 id="mail:send:post">メール配信設定作成<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/new</h4>
 <p>
@@ -1534,6 +1544,10 @@ APIコール数、1コールあたりの通数に制限はありませんが、<
   <tr>
     <th class="w100">改訂日</th>
     <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2022/04/15</td>
+    <td>配信データ削除APIを追加</td>
   </tr>
   <tr>
     <td>2020/04/30</td>
