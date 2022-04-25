@@ -62,7 +62,7 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 <tr>
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</td>
 <td>DELETE</td>
-<td>配信データを削除します</td>
+<td>配信設定を削除します</td>
 </tr>
 <tr>
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/new</td>
@@ -636,9 +636,9 @@ ERROR: エンジニア対応により強制終了された状態です。※通�
 </tr>
 </table>
 
-<h4 id="mail:send:delete">配信データ削除<br/>DELETE /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</h4>
+<h4 id="mail:send:delete">配信設定削除<br/>DELETE /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</h4>
 <p>
-指定の配信IDの配信データを削除します。削除すると各種配信結果は取得できません。
+指定の配信IDの配信設定を削除します。削除すると各種配信結果は取得できません。
 </p>
 
 <h4 id="mail:send:post">メール配信設定作成<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/new</h4>
@@ -1407,7 +1407,7 @@ HTTPステータスコードを使います。<br/>
 <td>10021</td>
 <td>deliveryTaskId</td>
 <td>配信処理中は削除できません。</td>
-<td>配信データ削除</td>
+<td>配信設定削除</td>
 </tr>
 </table>
 
@@ -1553,7 +1553,7 @@ APIコール数、1コールあたりの通数に制限はありませんが、<
   </tr>
   <tr>
     <td>2022/04/15</td>
-    <td>配信データ削除APIを追加</td>
+    <td>配信設定削除APIを追加</td>
   </tr>
   <tr>
     <td>2020/04/30</td>
