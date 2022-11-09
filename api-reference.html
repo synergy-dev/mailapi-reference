@@ -411,15 +411,6 @@ IDはUUIDを推奨します。</td>
 </td>
 </tr>
 <tr>
-<td>envelopeFrom</td>
-<td>String</td>
-<td></td>
-<td></td>
-<td>独自エンベロープFROMを使用する場合にエンベロープFROMメールアドレスを指定します。<br/>
-※独自エンベロープFROMのご利用は別途お申し込みが必要です。
-</td>
-</tr>
-<tr>
 <td>fromAddress</td>
 <td>String</td>
 <td>○</td>
@@ -1286,12 +1277,6 @@ HTTPステータスコードを使います。<br/>
 <td>メール配信実施</td>
 </tr>
 <tr>
-<td>10001</td>
-<td>envelopeFrom</td>
-<td>お申し込みいただいていないエンベロープFROMメールアドレスです</td>
-<td>メール配信実施</td>
-</tr>
-<tr>
 <td>10002</td>
 <td>trackingDomain</td>
 <td>お申し込みいただいていないドメインです</td>
@@ -1552,6 +1537,10 @@ APIコール数、1コールあたりの通数に制限はありませんが、<
   <tr>
     <th class="w100">改訂日</th>
     <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2022/11/09</td>
+    <td>envelopeFromに関する記述を削除</td>
   </tr>
   <tr>
     <td>2022/04/15</td>

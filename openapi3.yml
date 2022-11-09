@@ -316,10 +316,6 @@ components:
           description: "If you want to use this parameter, please contact support."
         trackingDomainSslReady:
           type: "boolean"
-        envelopeFrom:
-          type: "string"
-          format: "email"
-          description: "If you want to use this parameter, please contact support."
         fromName:
           type: "string"
           minLength: 1
@@ -374,10 +370,6 @@ components:
           description: "If you want to use this parameter, please contact support."
         trackingDomainSslReady:
           type: "boolean"
-        envelopeFrom:
-          type: "string"
-          format: "email"
-          description: "If you want to use this parameter, please contact support."
         count:
           type: "integer"
           nullable: false
@@ -403,10 +395,6 @@ components:
           description: "If you want to use this parameter, please contact support."
         trackingDomainSslReady:
           type: "boolean"
-        envelopeFrom:
-          type: "string"
-          format: "email"
-          description: "If you want to use this parameter, please contact support."
         fromName:
           type: "string"
           minLength: 1
