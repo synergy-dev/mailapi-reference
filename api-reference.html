@@ -48,7 +48,7 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 <h4>リクエストURL</h4>
 <p>
 <table><tr>
-<td rowspan="5">配信</td>
+<td rowspan="8">配信</td>
 <td rowspan="5">配信設定</td>
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries</td>
 <td>POST</td>
@@ -73,6 +73,22 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/send</td>
 <td>POST</td>
 <td>指定の配信IDの配信内容で配信を開始します</td>
+</tr>
+<tr>
+<td rowspan="3">予約配信設定</td>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/reserve/sendlists</td>
+<td>POST</td>
+<td>予約配信用の配信先リストを登録します</td>
+</tr>
+<tr>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/reserve/sendlists/{配信先リストID}</td>
+<td>GET</td>
+<td>配信先リスト情報を取得します</td>
+</tr>
+<tr>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/reserve</td>
+<td>POST</td>
+<td>配信の予約を行います</td>
 </tr>
 <tr>
 <td rowspan="4">配信結果</td>
@@ -104,7 +120,7 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 
 <h4>補足事項</h4>
 <p>
-SSL通信(TLS1.2)が必要となります。<br/>
+SSL通信(TLS1.2またはTLS1.3)が必要となります。<br/>
 各APIに応じて適切なメソッド(GET,POST)でリクエストする必要があります。<br/>
 APIの通信時の文字コードはUTF-8、エンコーディング形式はBase64エンコード+パーセントエンコーディング（URLエンコード）です。<br/>
 ユーザ名はご契約時にお知らせする3～4文字のアルファベット文字列です。<br/>
@@ -214,6 +230,9 @@ Synergy! メールAPIにアクセスするためのアクセストークンを�
 <li><a href="#mail:send:post">メール配信実施</a></li>
 <li><a href="#mail:send:get">配信状態取得</a></li>
 <li><a href="#mail:send:delete">配信設定削除</a></li>
+<li><a href="#mail:sendlist:post">予約配信用の配信先リストの登録</a></li>
+<li><a href="#mail:sendlist:get">配信先リスト情報取得</a></li>
+<li><a href="#mail:send:reserve">配信予約</a></li>
 </ul>
 </td>
 </tr>
@@ -457,6 +476,7 @@ IDはUUIDを推奨します。</td>
 <td></td>
 <td>メールテキスト本文を指定します。<br/>
 bodyText、bodyHtmlどちらかは必須です。<br/>
+本文のサイズは512KBまでです。<br/>
 </td>
 </tr>
 <tr>
@@ -466,6 +486,7 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 <td></td>
 <td>メールHTML本文を指定します。<br/>
 bodyText、bodyHtmlどちらかは必須です。<br/>
+本文のサイズは512KBまでです。<br/>
 </td>
 </tr>
 <tr>
@@ -510,7 +531,11 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 <td>配信先リストです。宛先データをハッシュ配列で指定します。<br/>
 プロパティCustomer.synergyidはレポートデータ紐づけのIDとなり、必須です。型はIntegerです。1以上2^64-1(18,446,744,073,709,551,615)以下の範囲で指定します。<br/>
 宛先メールアドレスとなる文字列プロパティが必須です。プロパティ名は任意で、deliveryMailAddressPropertyNameで指定します。<br/>
-埋め込みコマンドとして、プロパティ名Customer.で始まる任意の文字列データを指定可能です。<br/>
+埋め込みコマンドとして任意の文字列データを指定可能です。<br/>
+配信先リスト内のプロパティ名については、以下の制限があります。<br/>
+・プロパティ名がCustomer.で始まること<br/>
+・Customer.の次の文字はアルファベットかアンダーバー、それ以降は英数字かアンダーバーで構成されていること<br/>
+・全体で63文字以内であること<br/>
 配列長はcountプロパティと一致しなければなりません。
 </td>
 </tr>
@@ -611,9 +636,10 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 <tr>
 <td>status</td>
 <td>String</td>
-<td>配信の状態をSENDINGまたはCOMPLETEDまたはERRORで表します。<br/>
+<td>配信の状態をSENDING,COMPLETED,RESERVED,ERRORのいずれかで表します。<br/>
 SENDING: 配信処理中です。 {sent} 通まで配信処理が完了しています。<br/>
 COMPLETED: 配信を完了しています。{sent} {total} が一致します。<br/>
+RESERVED: 予約中です。<br/>
 ERROR: エンジニア対応により強制終了された状態です。※通常発生しません。
 </td>
 </tr>
@@ -631,7 +657,9 @@ ERROR: エンジニア対応により強制終了された状態です。※通�
 
 <h4 id="mail:send:delete">配信設定削除<br/>DELETE /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}</h4>
 <p>
-指定の配信IDの配信設定を削除します。削除すると各種配信結果は取得できません。
+指定の配信IDの配信設定を削除します。削除すると各種配信結果は取得できません。<br/>
+配信予約中の配信設定を削除した場合、配信先リストとの紐付けが解除され、対象の配信先リストに別の配信設定を紐付けられるようになります。<br/>
+また、配信予約中の配信設定で、現在日時が配信予約日時の5分前より後の場合、配信が完了するまで削除できません。
 </p>
 
 <h4 id="mail:send:post">メール配信設定作成<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/new</h4>
@@ -725,6 +753,7 @@ ERROR: エンジニア対応により強制終了された状態です。※通�
 <td></td>
 <td>メールテキスト本文を指定します。<br/>
 bodyText、bodyHtmlどちらかは必須です。<br/>
+本文のサイズは512KBまでです。<br/>
 </td>
 </tr>
 <tr>
@@ -734,6 +763,7 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 <td></td>
 <td>メールHTML本文を指定します。<br/>
 bodyText、bodyHtmlどちらかは必須です。<br/>
+本文のサイズは512KBまでです。<br/>
 </td>
 </tr>
 <tr>
@@ -807,7 +837,8 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 
 <h4 id="mail:send:post">指定の配信IDのメール配信実施<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/send</h4>
 <p>
-指定の配信IDのメールコンテンツを利用し、配信先リストを指定して配信を開始します。
+指定の配信IDの配信設定を利用し、配信先リストを指定して配信を開始します。<br/>
+指定した配信IDの配信設定が配信予約されているものは利用できません。
 </p>
 
 <p>リクエストサンプル</p>
@@ -900,8 +931,363 @@ IDはUUIDを推奨します。</td>
 <td>配信先リストです。宛先データをハッシュ配列で指定します。<br/>
 プロパティCustomer.synergyidはレポートデータ紐づけのIDとなり、必須です。型はIntegerです。1以上2^64-1(18,446,744,073,709,551,615)以下の範囲で指定します。<br/>
 宛先メールアドレスとなる文字列プロパティが必須です。プロパティ名はメール配信設定作成APIで指定したプロパティ名でなければなりません。<br/>
-埋め込みコマンドとして、プロパティ名Customer.で始まる任意の文字列データを指定可能です。<br/>
+埋め込みコマンドとして任意の文字列データを指定可能です。<br/>
+配信先リスト内のプロパティ名については、以下の制限があります。<br/>
+・プロパティ名がCustomer.で始まること<br/>
+・Customer.の次の文字はアルファベットかアンダーバー、それ以降は英数字かアンダーバーで構成されていること<br/>
+・全体で63文字以内であること<br/>
 配列長はcountプロパティと一致しなければなりません。
+</td>
+</tr>
+</table>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "deliveryTaskId":9999,
+  "textClickFeedbacks":[{"id": 14,"url": "http://example.com/"}],
+  "htmlClickFeedbacks":[{"id": 15,"url": "http://example.com/"}]
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>deliveryTaskId</td>
+<td>Integer</td>
+<td>メール配信IDです。配信状況、各種レポート取得時に必要となります。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks</td>
+<td>Array</td>
+<td>bodyText中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>textClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks</td>
+<td>Array</td>
+<td>bodyHtml中から発行されたクリックフィードバックの一覧です。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.id</td>
+<td>Integer</td>
+<td>クリックフィードバックIDです。</td>
+</tr>
+<tr>
+<td>htmlClickFeedbacks.url</td>
+<td>String</td>
+<td>クリックフィードバック変換前のURLです。</td>
+</tr>
+</table>
+
+<h4 id="mail:sendlist:post">予約配信用の配信先リストの登録<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/reserve/sendlists</h4>
+<p>
+予約配信用の配信先リストをCSV形式で登録します。<br/>
+Content-Typeヘッダにはtext/csvを指定し、リクエストボディにCSVデータをセットします。リクエストボディのサイズ上限は300MBです。<br/>
+文字コードはUTF-8エンコーディングとして扱います。<br/><br/>
+
+CSVデータの内容には以下の制約があり、満たされていない場合配信先リストの登録に失敗します。<br/>
+・レポートデータ紐付けのIDとしてヘッダにCustomer.synergyidカラムおよび各行にその値が必須です。値は1以上2^64-1(18,446,744,073,709,551,615)以下の範囲で指定します。<br/>
+・Customer.synergyidに加え、宛先メールアドレスとなるカラムが必須です。予約配信リクエストのdeliveryMailAddressPropertyNameで指定します。<br/>
+・埋め込みコマンドとして任意の文字列データを設定可能です。カラム名には以下の制約があり、満たされていない場合、配信先リストの登録に失敗します。<br/>
+　・カラム名がCustomer.で始まること<br/>
+　・Customer.の次の文字はアルファベットかアンダーバー、それ以降は英数字かアンダーバーで構成されていること<br/>
+　・全体で63文字以内であること<br/>
+・ヘッダのカラム名は重複のない名前を指定してください。<br/>
+・ヘッダのカラムの数と各行の値の数は一致させてください。<br/>
+・埋め込みコマンドとして使用する文字列データは4000文字を上限とします。<br/><br/>
+
+配信先リストが正常に登録できたかどうかは、<a href="#mail:sendlist:get">配信先リスト情報取得API</a>で確認できます。
+</p>
+
+<p>リクエストサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+"Customer.synergyid","Customer.mailaddress","Customer.name"
+"1","foo@example.com","山田"
+"2","bar@example.com","佐藤"
+</pre>
+</td>
+</tr>
+</table>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "sendListId":9999
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>sendListId</td>
+<td>Integer</td>
+<td>配信先リストIDです。配信予約時にリクエストに指定します。</td>
+</tr>
+</table>
+
+<h4 id="mail:sendlist:get">配信先リスト情報取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/reserve/sendlists/{配信先リストID}</h4>
+<p>
+指定の配信先リストIDの情報を取得します。
+</p>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "sendListId":9999,
+  "status": "SUCCESS",
+  "expirationDateTime": "2016-09-12T08:21:38+09:00",
+  "rowCount": 12345,
+  "errorMessage": null,
+  "deliveryTaskId":9999
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>sendListId</td>
+<td>Integer</td>
+<td>配信先リストIDです。</td>
+</tr>
+<tr>
+<td>status</td>
+<td>String</td>
+<td>配信先リスト登録状況をSUCCESS,FAIL,PROCESSING,EXPIREDのいずれかで表します。<br/>
+SUCCESS: 配信先リストが正常に登録されました。<br/>
+FAIL: 配信先リスト登録が失敗しました。詳細は {errorMessage} をご確認ください。<br/>
+PROCESSING: 配信先リストを登録中です。<br/>
+EXPIRED: 配信先リストが有効期限切れです。
+</td>
+</tr>
+<tr>
+<td>expirationDateTime</td>
+<td>DateTime</td>
+<td>配信先リストの有効期限です。</td>
+</tr>
+<tr>
+<td>rowCount</td>
+<td>Integer</td>
+<td>ヘッダ行を除く配信先リストの総行数です。</td>
+</tr>
+<tr>
+<td>errorMessage</td>
+<td>String</td>
+<td>配信先リスト登録に失敗した場合、失敗した理由が記載されます。メッセージが存在しない場合はnullになります。</td>
+</tr>
+<tr>
+<td>deliveryTaskId</td>
+<td>Integer</td>
+<td>指定した配信先リストを使用している配信設定IDです。使用している配信設定が存在しない場合はnullになります。</td>
+</tr>
+</table>
+
+<h4 id="mail:send:reserve">配信予約<br/>POST /e/tymail/v1/{ユーザ名}/mail/deliveries/reserve</h4>
+<p>
+指定の配信IDに紐付いた配信先リストをもとに、配信予約を行います。
+</p>
+
+<p>リクエストサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+{
+  "sendListId": 9999,
+  "requestId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "encode": "UTF-8",
+  "fromAddress": "support@example.com",
+  "fromName": "カスタマーサポート",
+  "replyAddress": "reply@example.com",
+  "subject": "こんにちは($db.Customer.name$)さん",
+  "bodyText": "お問い合わせは次のＵＲＬから <sym-tr symccid=\"0\" symcc=\"true\">http://example.com/</sym-tr>",
+  "bodyHtml": "&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;
+お問い合わせは次のＵＲＬから&lt;a href=\"http://example.com/\" symccid=\"0\" symcc=\"true\"&gt;フォーム&lt;/a&gt;
+&lt;/body&gt;&lt;/html&gt;",
+  "deliveryMailAddressPropertyName": "Customer.mailaddress",
+  "sendDateTime": "2016-09-12T08:21:38+09:00"
+}
+</pre>
+</td>
+</tr>
+</table>
+
+<p>JSONプロパティ</p>
+<table>
+<tr>
+<th class="w150">プロパティ名</th>
+<th class="w50">型</th>
+<th class="w50">必須</th>
+<th class="w100">デフォルト値</th>
+<th class="w450">説明</th>
+</tr>
+<tr>
+<td>sendListId</td>
+<td>Integer</td>
+<td>○</td>
+<td></td>
+<td>配信で使用する配信先リストのIDを指定します。<br/>
+同じ配信先リストIDに対して複数個配信設定を紐付けることはできません。
+</td>
+</tr>
+<tr>
+<td>requestId</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>API多重リクエストによる重複配信防止用のIDです。<br/>
+指定のIDで既に配信が設定されている場合、リクエストエラーとなり配信されません。<br/>
+requestIdには有効期間があり、1ヵ月です。期間を過ぎて以前のrequestIdを指定した場合は配信が実施されます。<br/>
+指定されない場合は常に配信が実施されます。<br/>
+IDはUUIDを推奨します。</td>
+</tr>
+<tr>
+<td>encode</td>
+<td>String</td>
+<td></td>
+<td>UTF-8</td>
+<td>メールのエンコーディングをUTF-8、ISO-2022-JPのどちらか指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>fromAddress</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メール差出人アドレスを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>fromName</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>メール差出人名を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>replyAddress</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>メール返信先アドレスを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>preheader</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>プレヘッダ―を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>subject</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メール件名を指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>bodyText</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メールテキスト本文を指定します。<br/>
+bodyText、bodyHtmlどちらかは必須です。<br/>
+本文のサイズは512KBまでです。<br/>
+</td>
+</tr>
+<tr>
+<td>bodyHtml</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>メールHTML本文を指定します。<br/>
+bodyText、bodyHtmlどちらかは必須です。<br/>
+本文のサイズは512KBまでです。<br/>
+</td>
+</tr>
+<tr>
+<td>deliveryMailAddressPropertyName</td>
+<td>String</td>
+<td>○</td>
+<td></td>
+<td>配信先リスト中の宛先メールアドレスのプロパティ名を指定します。
+</td>
+</tr>
+<tr>
+<td>trackingDomain</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>クリックフィードバックURLに独自ドメインを使用する場合にドメインを指定します。<br/>
+※独自ドメインのご利用は別途お申し込みが必要です。
+</td>
+</tr>
+<tr>
+<td>trackingDomainSslReady</td>
+<td>Boolean</td>
+<td></td>
+<td>false</td>
+<td>クリックフィードバックURLに使用する独自ドメインがSSL通信可能かどうかを指定します。<br/>
+</td>
+</tr>
+<tr>
+<td>sendDateTime</td>
+<td>DateTime</td>
+<td>○</td>
+<td></td>
+<td>配信予約日時をISO 8601フォーマットで指定します。<br/>
+（例）2019-04-01T15:00:00+09:00<br/>
+指定可能な日時は、現在時刻の5分後から、指定した配信先リストを登録した日時の7日後までです。<br/>
+予約日時は、配信処理の開始の目安とし、最大5分程度の遅延が生じる可能性があります。
 </td>
 </tr>
 </table>
@@ -1246,7 +1632,7 @@ HTTPステータスコードを使います。<br/>
 </tr>
 <tr>
 <td>errors[].code</td>
-<td>Integer</td>
+<td>String</td>
 <td>発生したエラーのエラーコードです。</td>
 </tr>
 <tr>
@@ -1332,7 +1718,7 @@ HTTPステータスコードを使います。<br/>
 </tr>
 <tr>
 <td>10011</td>
-<td>bodyTesxt/bodyHtml</td>
+<td>bodyText/bodyHtml</td>
 <td>テキスト本文かHTML本文のどちらかは必須です。</td>
 <td>メール配信実施</td>
 </tr>
@@ -1396,6 +1782,90 @@ HTTPステータスコードを使います。<br/>
 <td>配信処理中は削除できません。</td>
 <td>配信設定削除</td>
 </tr>
+<tr>
+<td>10022</td>
+<td>sendListId</td>
+<td>配信先リストIDは必須です。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10023</td>
+<td>sendListId</td>
+<td>指定した配信先リストIDに該当する配信先リストが存在しません。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10024</td>
+<td>sendListId</td>
+<td>指定した配信先リストIDに該当する配信先リストは有効期限切れのため利用できません。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10025</td>
+<td>sendListId</td>
+<td>指定した配信先リストIDに該当する配信先リストは正常に登録が完了していないため利用できません。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10026</td>
+<td>sendListId</td>
+<td>指定した配信先リストIDに該当する配信先リストはすでに別の配信に利用されています。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10027</td>
+<td>deliveryMailAddressPropertyName</td>
+<td>登録した配信先リストの中にdeliveryMailAddressPropertyNameで指定したメールアドレス項目がありません。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10028</td>
+<td>sendDateTime</td>
+<td>配信予約日時は必須です。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10029</td>
+<td>sendDateTime</td>
+<td>日時指定フォーマットが不正です。ISO 8601フォーマットで指定してください。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10030</td>
+<td>sendDateTime</td>
+<td>配信予約日時の値が不正です。現在時刻の5分後から配信先リストの有効期限の範囲で指定してください。</td>
+<td>配信予約</td>
+</tr>
+<tr>
+<td>10031</td>
+<td>deliveryTaskId</td>
+<td>現在日時が配信予約日時の5分前より後の場合、配信が完了するまで削除できません。</td>
+<td>配信設定削除</td>
+</tr>
+<tr>
+<td>10032</td>
+<td>bodyText/bodyHtml</td>
+<td>本文のサイズは512KBまでです。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10033</td>
+<td>deliveryTaskId</td>
+<td>指定した配信IDの配信設定は配信予約されており、即時配信には利用できません。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10034</td>
+<td></td>
+<td>リクエストボディに指定したJSONは型の不整合やフォーマットの問題があります。</td>
+<td>メール配信実施</td>
+</tr>
+<tr>
+<td>10035</td>
+<td>deliveryData</td>
+<td>配信リスト中のプロパティ名が指定している形式に違反しています。</td>
+<td>メール配信実施</td>
+</tr>
 </table>
 
 <br/>
@@ -1418,7 +1888,7 @@ HTTPステータスコードを使います。<br/>
 ※メール差出人名、差出人アドレスに埋め込みコマンドを使用することで、私信風メールを送ることができます。<br/>
 </p>
 <p>
-・配信先リスト例<br/>
+・配信先リスト例（JSON）<br/>
 <table>
 <tr>
 <td>
@@ -1433,6 +1903,23 @@ HTTPステータスコードを使います。<br/>
     }
   ]
 </pre>
+</td>
+</tr>
+</td>
+</tr>
+</table>
+</p>
+<p>
+・配信先リスト例（CSV）<br/>
+<table>
+<tr>
+<td>
+<pre>
+Customer.synergyid,Customer.mailaddress,Customer.name,Customer.created_at,Customer.point
+1,foo@example.com,山田,2019/03/01,99
+</pre>
+</td>
+</tr>
 </td>
 </tr>
 </table>
@@ -1528,6 +2015,7 @@ HTTPステータスコードを使います。<br/>
 <p>
 APIコール数、1コールあたりの通数に制限はありませんが、<br/>
 最大で秒間5コール程度、1コールあたり100万通程度を推奨します。<br/>
+それ以上を配信される場合は、配信先リスト登録による予約配信をご検討ください。<br/>
 </p>
 <br/>
 
@@ -1537,6 +2025,24 @@ APIコール数、1コールあたりの通数に制限はありませんが、<
   <tr>
     <th class="w100">改訂日</th>
     <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2023/04/11</td>
+    <td>APIを追加<br/>
+・予約配信用の配信先リストの登録<br/>
+・配信先リスト情報取得<br/>
+・配信予約<br/>
+配信状態取得APIで返却されるstatusの値を追加<br/>
+配信設定削除APIで予約中の配信設定を削除した場合の説明を追加<br/>
+メール配信実施APIおよびメール配信設定作成APIのbodyTextとbodyHtmlにサイズ上限の説明を追加<br/>
+指定の配信IDのメール配信実施APIで配信予約中の配信IDを指定した場合の説明を追加<br/>
+メール配信実施のJSONプロパティ deliveryData[] におけるプロパティ名の制限についての説明を追加<br/>
+エラーコード追加（10022～10035）<br/>
+「埋め込みコマンドを使用する」にCSV形式の配信先リスト例を追加<br/>
+「APIコール数、通数制限について」に注意事項を追記<br/>
+TLS対応バージョンを修正<br/>
+「Synergy! メールAPIから返されるエラー定義」でerrors[].codeの型をStringに修正
+    </td>
   </tr>
   <tr>
     <td>2022/11/09</td>
