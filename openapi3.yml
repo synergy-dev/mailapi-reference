@@ -1,7 +1,7 @@
 openapi: "3.0.2"
 info:
   description: "Synergy! mail delivery api."
-  version: "1.0.2"
+  version: "1.0.3"
   title: "Synergy! mail delivery api."
   termsOfService: ""
   x-audience: "https://mail.paas.crmstyle.com"
@@ -126,6 +126,89 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/DeliverySettingRequest"
+      responses:
+        200:
+          description: "delivery status"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+        400:
+          description: "bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        500:
+          description: "internal server error"
+      security:
+      - mail_oauth:
+        - "mail:send"
+  /tymail/v1/{user}/mail/deliveries/reserve/sendlists:
+    post:
+      summary: "create send list"
+      operationId: "createSendList"
+      parameters:
+      - $ref: "#/components/parameters/user"
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: "string"
+      responses:
+        200:
+          description: "send list id"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateSendListResponse"
+        400:
+          description: "bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        413:
+          description: "entity too large"
+        500:
+          description: "internal server error"
+      security:
+      - mail_oauth:
+        - "mail:send"
+  /tymail/v1/{user}/mail/deliveries/reserve/sendlists/{sendListId}:
+    get:
+      summary: "get send list"
+      operationId: "getSendList"
+      parameters:
+      - $ref: "#/components/parameters/user"
+      - $ref: "#/components/parameters/sendListId"
+      responses:
+        200:
+          description: "send list"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendList"
+        404:
+          description: "no send list found"
+        500:
+          description: "internal server error"
+      security:
+      - mail_oauth:
+        - "mail:send"
+  /tymail/v1/{user}/mail/deliveries/reserve:
+    post:
+      summary: "reserve mail delivery"
+      operationId: "reserveMailDelivery"
+      parameters:
+      - $ref: "#/components/parameters/user"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservingDeliveryRequest"
       responses:
         200:
           description: "delivery status"
@@ -275,6 +358,14 @@ components:
       name: "taskId"
       required: true
       description: "delivery task id"
+      schema:
+        type: "integer"
+        format: "int64"
+    sendListId:
+      in: "path"
+      name: "sendListId"
+      required: true
+      description: "send list id"
       schema:
         type: "integer"
         format: "int64"
@@ -463,9 +554,93 @@ components:
           type: "string"
           description: "delivery status"
           enum:
+          - "RESERVED"
           - "SENDING"
           - "COMPLETED"
           - "ERROR"
+    CreateSendListResponse:
+      type: "object"
+      properties:
+        sendListId:
+          type: "integer"
+          format: "int64"
+    SendList:
+      type: "object"
+      properties:
+        sendListId:
+          type: "integer"
+          format: "int64"
+        status:
+          type: "string"
+          enum:
+          - "SUCCESS"
+          - "FAIL"
+          - "PROCESSING"
+          - "EXPIRED"
+        expirationDateTime:
+          type: "string"
+          format: "date-time"
+        rowCount:
+          type: "integer"
+          format: "int64"
+        errorMessage:
+          type: "string"
+        deliveryTaskId:
+          type: "integer"
+          format: "int64"
+    ReservingDeliveryRequest:
+      type: "object"
+      properties:
+        sendListId:
+          type: "integer"
+          format: "int64"
+        requestId:
+          type: "string"
+          minLength: 1
+        encode:
+          type: "string"
+          enum:
+          - "UTF-8"
+          - "ISO-2022-JP"
+          default: "UTF-8"
+        fromAddress:
+          type: "string"
+          nullable: false
+          minLength: 1
+          maxLength: 256
+        fromName:
+          type: "string"
+          minLength: 1
+          maxLength: 120
+        replyAddress:
+          type: "string"
+          minLength: 1
+          maxLength: 256
+        preheader:
+          type: "string"
+        subject:
+          type: "string"
+          nullable: false
+          minLength: 1
+          maxLength: 120
+        bodyText:
+          type: "string"
+          minLength: 1
+        bodyHtml:
+          type: "string"
+          minLength: 1
+        deliveryMailAddressPropertyName:
+          type: "string"
+          nullable: false
+          minLength: 1
+        trackingDomain:
+          type: "string"
+          description: "If you want to use this parameter, please contact support."
+        trackingDomainSslReady:
+          type: "boolean"
+        sendDateTime:
+          type: "string"
+          format: "date-time"
     ErrorResponse:
       type: "object"
       properties:
@@ -477,7 +652,7 @@ components:
       type: "object"
       properties:
         code:
-          type: "integer"
+          type: "string"
         property:
           type: "string"
         message:
