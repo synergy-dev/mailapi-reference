@@ -267,7 +267,7 @@ paths:
       - $ref: "#/components/parameters/reportTermEnd"
       responses:
         200:
-          description: "mail open results"
+          description: "mail click results"
           headers:
             Content-MD5:
               schema:
@@ -296,7 +296,7 @@ paths:
       - $ref: "#/components/parameters/reportTermEnd"
       responses:
         200:
-          description: "mail open results"
+          description: "mail error results"
           headers:
             Content-MD5:
               schema:
@@ -338,6 +338,32 @@ paths:
                 format: "binary"
         404:
           description: "no delivery task found"
+        500:
+          description: "internal server error"
+      security:
+      - mail_oauth:
+        - "mail:result"
+  /tymail/v1/{user}/mail/deliveries/errors/all:
+    get:
+      summary: "Get all mail error results"
+      operationId: "getAllDeliveryMailErrorResults"
+      parameters:
+      - $ref: "#/components/parameters/user"
+      - $ref: "#/components/parameters/reportTermStart"
+      - $ref: "#/components/parameters/reportTermEnd"
+      responses:
+        200:
+          description: "all mail error results"
+          headers:
+            Content-MD5:
+              schema:
+                type: "string"
+                format: "byte"
+          content:
+            application/octet-stream:
+              schema:
+                type: "string"
+                format: "binary"
         500:
           description: "internal server error"
       security:

@@ -91,7 +91,7 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 <td>配信の予約を行います</td>
 </tr>
 <tr>
-<td rowspan="4">配信結果</td>
+<td rowspan="5">配信結果</td>
 <td>開封確認結果取得</td>
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/opens</td>
 <td>GET</td>
@@ -114,6 +114,12 @@ RESTを適用しており、必要なパラメータを指定してURLにアク�
 <td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/results</td>
 <td>GET</td>
 <td>配信結果を取得します</td>
+</tr>
+<tr>
+<td>全配信エラー結果取得</td>
+<td>https://mail.paas.crmstyle.com/e/tymail/v1/{ユーザ名}/mail/deliveries/errors/all</td>
+<td>GET</td>
+<td>全ての配信から配信が失敗した宛先を取得します</td>
 </tr>
 </table>
 </p>
@@ -244,6 +250,7 @@ Synergy! メールAPIにアクセスするためのアクセストークンを�
 <li><a href="#mail:result:open">開封確認結果取得</a></li>
 <li><a href="#mail:result:click">クリックフィードバック結果取得</a></li>
 <li><a href="#mail:result:error">配信エラー結果取得</a></li>
+<li><a href="#mail:result:allerror">全配信エラー結果取得</a></li>
 </ul>
 </td>
 </tr>
@@ -338,8 +345,9 @@ curl -i \
 <h4>補足事項</h4>
 <p>
 アクセストークンには1時間の有効期限があります。<br/>
-有効期限切れのアクセストークンを指定されてメールAPIをリクエストされた場合、401 Unauthorized エラーを返します。<br/>
-有効期限切れとなった場合は、再度アクセストークンを取得してください。
+Synergy! メールAPI へアクセスするたびにアクセストークンを取得しないようにしてください。<br/>
+有効期限切れとなった場合は、再度アクセストークンを取得してください。<br/>
+有効期限切れのアクセストークンを指定されてメールAPIをリクエストされた場合、401 Unauthorized エラーを返します。
 </p>
 
 <br/>
@@ -1365,7 +1373,8 @@ Content-Typeヘッダは application/octet-stream;charset=UTF-8 となります�
 <br/>
 各配信結果APIでは、クエリパラメータ start/end で取得期間の指定が可能です。<br/>
 取得期間の指定は、開始終了・開始のみ・終了のみの指定が可能です。<br/>
-両方ともに指定しない場合、全期間が対象となります。日時指定フォーマットはISO 8601です。
+両方ともに指定しない場合、全期間が対象となります。全配信エラー結果取得APIのみ、取得可能な期間は現在日時から6ヶ月前の1日以降です。<br />
+日時指定フォーマットはISO 8601です。
 
 <p>クエリパラメータ</p>
 <table>
@@ -1517,6 +1526,27 @@ Content-Typeヘッダは application/octet-stream;charset=UTF-8 となります�
 <pre>
 "Synergy!ID","配信日時"
 "10038","2020-04-28 16:20:09"
+</pre>
+</td>
+</tr>
+</table>
+
+<h4 id="mail:result:allerror">全配信エラー結果取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/errors/all</h4>
+<p>
+全配信の配信エラー結果(CSV)を取得します。<br/>
+取得可能な期間は現在日時から6ヶ月前の1日以降です。それより前のデータは取得できません。<br/>
+startにそれより前の日時を指定した場合も6ヶ月前の1日から現在日時までのデータのみ取得可能です。<br/>
+（例）現在日時が2023/09/12 01:23:45の場合、2023/03/01 00:00:00から2023/09/12 01:23:45までのデータが取得可能<br/>
+配信エラー理由の内容は<a href="#mail:result:error">配信エラー結果取得</a>の配信エラー理由一覧と同様です。
+</p>
+
+<p>レスポンスサンプル</p>
+<table>
+<tr>
+<td>
+<pre>
+"Synergy!ID","配信エラー日時","配信エラー理由","配信ID"
+"20076","2023-09-12 12:34:56","UNKNOWN_USER","9999"
 </pre>
 </td>
 </tr>
@@ -2033,6 +2063,12 @@ Synergy! メールAPIは、APIコール数、通数制限の範囲内にてご�
   <tr>
     <th class="w100">改訂日</th>
     <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2023/09/12</td>
+    <td>Synergy! メールAPIリクエストの補足事項の記述を修正<br/>
+全配信エラー結果取得APIを追加
+    </td>
   </tr>
   <tr>
     <td>2023/06/22</td>
