@@ -646,7 +646,7 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 <td>String</td>
 <td>配信の状態をSENDING,COMPLETED,RESERVED,ERRORのいずれかで表します。<br/>
 SENDING: 配信処理中です。 {sent} 通まで配信処理が完了しています。<br/>
-COMPLETED: 配信を完了しています。{sent} {total} が一致します。<br/>
+COMPLETED: 配信を完了しています。{sent} {total} が一致します。{sent} {total} がともに0の場合もCOMPLETEDが返されます。<br/>
 RESERVED: 予約中です。<br/>
 ERROR: エンジニア対応により強制終了された状態です。※通常発生しません。
 </td>
@@ -2063,6 +2063,10 @@ Synergy! メールAPIは、APIコール数、通数制限の範囲内にてご�
   <tr>
     <th class="w100">改訂日</th>
     <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2023/10/10</td>
+    <td>配信状態取得APIのstatusの説明を修正</td>
   </tr>
   <tr>
     <td>2023/09/12</td>
