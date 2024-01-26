@@ -571,7 +571,14 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 <td>Boolean</td>
 <td></td>
 <td>false</td>
-<td>メール受信者が配信解除依頼をできる設定を行うかどうかを指定します。<br/>
+<td>メール受信者より配信解除依頼を受け付けるかどうかを指定します。<br/>
+trueを指定することで、List-UnsubscribeヘッダとList-Unsubscribe-Postヘッダが追加されます。<br/>
+・追加されるメールヘッダの例<br/>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click<br/>
+List-Unsubscribe: &#060;https://(解除用URL)&#062;<br/><br/>
+
+Gmailアプリなどの対応メーラーでこのメールを受信した際、受信者がメーラー側に表示される解除リンクから配信解除を依頼できます。<br/>
+メール配信後は、配信解除依頼リストAPIで解除希望者を取得し、次回以降の配信先リストから除外してください。
 </td>
 </tr>
 </table>
@@ -980,7 +987,14 @@ IDはUUIDを推奨します。</td>
 <td>Boolean</td>
 <td></td>
 <td>false</td>
-<td>メール受信者が配信解除依頼をできる設定を行うかどうかを指定します。<br/>
+<td>メール受信者より配信解除依頼を受け付けるかどうかを指定します。<br/>
+trueを指定することで、List-UnsubscribeヘッダとList-Unsubscribe-Postヘッダが追加されます。<br/>
+・追加されるメールヘッダの例<br/>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click<br/>
+List-Unsubscribe: &#060;https://(解除用URL)&#062;<br/><br/>
+
+Gmailアプリなどの対応メーラーでこのメールを受信した際、受信者がメーラー側に表示される解除リンクから配信解除を依頼できます。<br/>
+メール配信後は、配信解除依頼リストAPIで解除希望者を取得し、次回以降の配信先リストから除外してください。
 </td>
 </tr>
 </table>
@@ -2137,6 +2151,10 @@ Synergy! メールAPIは、APIコール数、通数制限の範囲内にてご�
   <tr>
     <th class="w100">改訂日</th>
     <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2024/1/26</td>
+    <td>oneClickUnsubscriptionReadyの説明を修正</td>
   </tr>
   <tr>
     <td>2023/12/12</td>
