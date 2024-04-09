@@ -1208,7 +1208,8 @@ EXPIRED: 配信先リストが有効期限切れです。
 お問い合わせは次のＵＲＬから&lt;a href=\"http://example.com/\" symccid=\"0\" symcc=\"true\"&gt;フォーム&lt;/a&gt;
 &lt;/body&gt;&lt;/html&gt;",
   "deliveryMailAddressPropertyName": "Customer.mailaddress",
-  "sendDateTime": "2016-09-12T08:21:38+09:00"
+  "sendDateTime": "2016-09-12T08:21:38+09:00",
+  "oneClickUnsubscriptionReady": true
 }
 </pre>
 </td>
@@ -1346,6 +1347,21 @@ bodyText、bodyHtmlどちらかは必須です。<br/>
 （例）2019-04-01T15:00:00+09:00<br/>
 指定可能な日時は、現在時刻の5分後から、指定した配信先リストを登録した日時の7日後までです。<br/>
 予約日時は、配信処理の開始の目安とし、最大5分程度の遅延が生じる可能性があります。
+</td>
+</tr>
+<tr>
+<td>oneClickUnsubscriptionReady</td>
+<td>Boolean</td>
+<td></td>
+<td>false</td>
+<td>メール受信者より配信解除依頼を受け付けるかどうかを指定します。<br/>
+trueを指定することで、List-UnsubscribeヘッダとList-Unsubscribe-Postヘッダが追加されます。<br/>
+・追加されるメールヘッダの例<br/>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click<br/>
+List-Unsubscribe: &#060;https://(解除用URL)&#062;<br/><br/>
+
+Gmailアプリなどの対応メーラーでこのメールを受信した際、受信者がメーラー側に表示される解除リンクから配信解除を依頼できます。<br/>
+メール配信後は、配信解除依頼リストAPIで解除希望者を取得し、次回以降の配信先リストから除外してください。
 </td>
 </tr>
 </table>
@@ -2151,6 +2167,10 @@ Synergy! メールAPIは、APIコール数、通数制限の範囲内にてご�
   <tr>
     <th class="w100">改訂日</th>
     <th>更新内容</th>
+  </tr>
+  <tr>
+    <td>2024/4/9</td>
+    <td>配信予約APIにoneClickUnsubscriptionReadyを追加</td>
   </tr>
   <tr>
     <td>2024/1/26</td>

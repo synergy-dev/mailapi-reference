@@ -726,6 +726,8 @@ components:
         sendDateTime:
           type: "string"
           format: "date-time"
+        oneClickUnsubscriptionReady:
+          type: "boolean"
     ErrorResponse:
       type: "object"
       properties:
