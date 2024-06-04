@@ -1486,6 +1486,10 @@ Content-Typeヘッダは application/octet-stream;charset=UTF-8 となります�
 <td>start=2019-04-01T15:00:00+09:00&end=2019-04-01T16:00:00+09:00</td>
 </tr>
 </table>
+<p>
+※「+」は「%2B」に URLエンコードしてください。<br/>
+　（例）start=2019-04-01T15:00:00%2B09:00
+</p>
 
 <h4 id="mail:result:open">開封確認結果取得<br/>GET /e/tymail/v1/{ユーザ名}/mail/deliveries/{配信ID}/opens</h4>
 <p>
